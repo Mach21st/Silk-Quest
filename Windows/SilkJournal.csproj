@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>SilkJournal</AssemblyName>
+    <RootNamespace>SilkJournal</RootNamespace>
+    <ApplicationIcon>Assets\silk-quest.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup><Resource Include="Assets\silk-quest.ico"/></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="Assets\en.json"/></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="Assets\starter-pepsi.png"/></ItemGroup>
+  <ItemGroup><PackageReference Include="QRCoder" Version="1.7.0"/></ItemGroup>
+</Project>

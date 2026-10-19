@@ -1,0 +1,24 @@
+**/bin/
+**/obj/
+**/build/
+/Windows/app/
+/publish/
+**/data/
+**/ui-verification-data/
+**/test-data-*/
+*.jks
+*.keystore
+*.pfx
+*.apk
+*.idsig
+*.zip
+*-test-*.txt
+pairing-test*
+error.log
+local.properties
+
+# Release downloads belong in GitHub Releases
+*.exe
+*.dll
+*.pdb
+SHA256SUMS.txt

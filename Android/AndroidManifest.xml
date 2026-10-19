@@ -1,0 +1,20 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="app.silkquest.companion" android:versionCode="3" android:versionName="0.3">
+ <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36"/>
+ <uses-permission android:name="android.permission.INTERNET"/>
+ <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+ <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>
+ <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+ <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+ <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE"/>
+ <uses-permission android:name="android.permission.CAMERA"/>
+ <uses-feature android:name="android.hardware.camera" android:required="false"/>
+ <application android:label="Silk Quest" android:icon="@drawable/ic_launcher" android:theme="@style/AppTheme" android:allowBackup="false" android:usesCleartextTraffic="false" android:supportsRtl="true">
+  <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop">
+   <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+   <intent-filter><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="silkquest" android:host="pair"/></intent-filter>
+  </activity>
+  <activity android:name=".ScanActivity" android:exported="false" android:screenOrientation="portrait"/>
+  <service android:name=".SyncService" android:exported="false" android:foregroundServiceType="connectedDevice"/>
+  <receiver android:name=".QuestActionReceiver" android:exported="false"/>
+ </application>
+</manifest>

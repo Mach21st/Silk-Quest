@@ -1,0 +1,10 @@
+name: Small improvement
+description: Suggest a feature or a detail worth polishing.
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to improve?
+      description: Describe the situation and how the change would help.
+    validations:
+      required: true

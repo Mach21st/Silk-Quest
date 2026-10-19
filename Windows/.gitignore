@@ -1,0 +1,14 @@
+bin/
+obj/
+app/
+**/data/
+**/ui-verification-data/
+**/test-data-*/
+*.pfx
+*.jks
+*.keystore
+*-test-*.txt
+pairing-test*
+error.log
+*.zip
+*.apk
