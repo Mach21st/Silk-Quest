@@ -2,7 +2,7 @@
 
 <img src="docs/images/icon.png" width="92" alt="Silk Quest icon" />
 
-# Silk Quest
+# Silk Quest 1.0
 
 ### Turn real-life goals into a quest journal.
 

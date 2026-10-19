@@ -1,4 +1,4 @@
-# Silk Quest 0.3.0 — Your first quest
+# Silk Quest 1.0.0 — Your first quest
 
 The first public release of **Silk Quest**, a dark-fantasy quest journal for real-life goals.
 

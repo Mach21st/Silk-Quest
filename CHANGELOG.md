@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 — First public release
+## 1.0.0 — First public release
 
 - Nested main quests, side quests and steps, progress and collapsible task trees.
 - A focus timer from 1 to 180 minutes, with quick presets and an unwinding thread animation.

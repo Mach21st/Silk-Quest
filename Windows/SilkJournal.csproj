@@ -6,6 +6,8 @@
     <UseWindowsForms>true</UseWindowsForms>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
+    <Version>1.0.0</Version>
+    <Product>Silk Quest</Product>
     <AssemblyName>SilkJournal</AssemblyName>
     <RootNamespace>SilkJournal</RootNamespace>
     <ApplicationIcon>Assets\silk-quest.ico</ApplicationIcon>
