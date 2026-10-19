@@ -1,32 +1,58 @@
-# Silk Quest 1.0.0 — Your first quest
+# Silk Quest 1.0 — Your first quest
 
-The first public release of **Silk Quest**, a dark-fantasy quest journal for real-life goals.
+<div align="center">
 
-## Start here
+### A little journal for a bigger journey.
 
-**Windows:** download `SilkQuest-Windows-x64.zip`, extract it into a writable folder, and open `SilkQuest.exe`. Windows 10/11 x64; .NET is included.
+A Silksong-inspired home for your quests, focused work, and rewards worth earning.
 
-The first launch is in English with editable example quests and a Pepsi Bottle reward. Russian is available in Settings.
+**[🖥️ Download for Windows](https://github.com/Mach21st/Silk-Quest/releases/download/v1.0.0/SilkQuest-Windows-x64.zip)** · **[📱 Android companion](https://github.com/Mach21st/Silk-Quest/releases/download/v1.0.0/SilkQuest-Android.apk)**
 
-## Inside the journal
+</div>
 
-- A thread of nested quests, steps and progress.
-- A configurable focus timer with an unwinding thread animation.
-- A compact quest window above your other apps.
-- Rosary rewards and a shop for your own symbolic rewards.
-- Undo, export and local snapshots.
-- Optional local Wi-Fi pairing with an Android notification companion.
+![Silk Quest — your quest journal](https://raw.githubusercontent.com/Mach21st/Silk-Quest/main/docs/images/journal.png)
 
-## Downloads
+## 🧵 Follow your own thread
 
-| File | Purpose |
+- **Quests that unfold** — nested steps, progress, and main or side quests.
+- **Room to focus** — a 1–180 minute timer with an unwinding thread animation.
+- **Keep your quest close** — a movable, compact window above your other apps.
+- **Rewards you choose** — earn rosaries and spend them in your personal reward shop.
+- **Progress kept safe** — undo, export, and automatic local snapshots.
+
+---
+
+## 🖥️ Windows · the journal
+
+| Download | What you get |
 | --- | --- |
-| `SilkQuest-Windows-x64.zip` | Recommended Windows download, with README and third-party notices |
-| `SilkQuest.exe` | Standalone Windows executable |
-| `SilkQuest-Android.apk` | Optional Android companion; currently Russian UI |
-| `SilkQuest-source.zip` | Windows and Android source, docs and screenshots |
-| `SHA256SUMS.txt` | File checksums |
+| **[SilkQuest-Windows-x64.zip](https://github.com/Mach21st/Silk-Quest/releases/download/v1.0.0/SilkQuest-Windows-x64.zip)** | **Recommended** — app, user guide, and third-party notices |
+| [SilkQuest.exe](https://github.com/Mach21st/Silk-Quest/releases/download/v1.0.0/SilkQuest.exe) | Standalone executable |
 
-Your journal is stored in `data` beside the executable. When updating, quit through the tray menu and keep that folder. Releases contain no personal data or pairing credentials.
+Extract the ZIP into a writable folder and open **SilkQuest.exe**.
 
-The Windows app and local HTTPS protocol have been tested. Camera and background notification behavior on physical Android hardware has not yet been verified.
+**Windows 10/11 · x64 · .NET included**
+
+## 📱 Android · a quest in your pocket
+
+**[Download SilkQuest-Android.apk](https://github.com/Mach21st/Silk-Quest/releases/download/v1.0.0/SilkQuest-Android.apk)**
+
+An optional companion that keeps a quest in your notification shade. Pair it from **Settings → Phone · Wi-Fi** while both devices are on the same home network. Your computer must stay on with the journal running.
+
+The companion currently uses Russian UI. Camera and background notification behavior have not yet been verified on a physical Android device.
+
+[Pairing guide →](https://github.com/Mach21st/Silk-Quest/blob/main/Android/README.md)
+
+---
+
+## 💾 Keep your progress
+
+Your journal lives in the **data** folder beside the executable. When updating, quit through the tray menu, replace the app, and keep that folder.
+
+No account or cloud server required. Release downloads contain no personal journal or pairing credentials.
+
+[Verify downloads · SHA256 checksums](https://github.com/Mach21st/Silk-Quest/releases/download/v1.0.0/SHA256SUMS.txt)
+
+## 💬 Along the way
+
+[Windows guide](https://github.com/Mach21st/Silk-Quest/blob/main/Windows/README.md) · [Source code](https://github.com/Mach21st/Silk-Quest) · [Report a bug](https://github.com/Mach21st/Silk-Quest/issues/new)
