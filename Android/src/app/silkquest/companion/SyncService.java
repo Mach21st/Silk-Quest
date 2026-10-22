@@ -26,6 +26,8 @@ public final class SyncService extends Service {
   while(!stopped&&PhoneClient.prefs(this).getBoolean("enabled",false)&&PhoneClient.paired(this)){
    try{
     PhoneClient.selectLocalNetwork(this);
+    MobileStore.sync(this,c->current=c);
+    sendBroadcast(new Intent(UPDATED).setPackage(getPackageName()));
     String pending=PhoneClient.prefs(this).getString("pending",null);
     if(pending!=null){
      PhoneClient.Response completion=PhoneClient.request(this,"/api/complete",new JSONObject(pending),c->current=c);
@@ -41,8 +43,8 @@ public final class SyncService extends Service {
     if(response.code!=200||response.json.optInt("protocol")!=1)throw new java.io.IOException("Неизвестный ответ компьютера");
     accept(response.json,"На связи · домашний Wi-Fi");retry=0;
    }catch(Exception e){
-    if(stopped)break;online=false;
-    String status=e instanceof StorageFailure?"ПК не сохранил действие · повторим отправку":e instanceof javax.net.ssl.SSLException?"Сертификат ПК изменился. Подключись заново через QR.":PhoneClient.prefs(this).contains("pending")?"Нет связи · завершение ожидает Wi-Fi":"Нет связи · сохранён последний квест";
+    if(stopped)break;if(!PhoneClient.paired(this)){revoked();break;}online=false;
+    String status=e instanceof StorageFailure?"ПК не сохранил действие · повторим отправку":e instanceof javax.net.ssl.SSLException?"Сертификат ПК изменился. Подключись заново через QR.":PhoneClient.prefs(this).contains("pending")?"Нет связи · завершение ожидает Wi-Fi":e.getMessage()!=null?e.getMessage():"Нет связи · журнал доступен офлайн";
     PhoneClient.prefs(this).edit().putString("status",status).putBoolean("online",false).apply();update();
     try{Thread.sleep(Math.min(30000,3000L*(++retry)));}catch(InterruptedException ignored){}
    }
@@ -53,20 +55,22 @@ public final class SyncService extends Service {
  }
  void revoked(){PhoneClient.prefs(this).edit().remove("token").remove("pending").remove("cache").putBoolean("enabled",false).putString("status","Доступ отозван на компьютере. Подключись заново.").apply();stopped=true;getSystemService(NotificationManager.class).cancel(ID);sendBroadcast(new Intent(UPDATED).setPackage(getPackageName()));stopSelf();}
  void update(){if(stopped)return;try{getSystemService(NotificationManager.class).notify(ID,notification());}catch(SecurityException ignored){}sendBroadcast(new Intent(UPDATED).setPackage(getPackageName()));}
- Notification notification(){
-  JSONObject state=PhoneClient.cache(this),q=state.optJSONObject("quest");boolean pending=PhoneClient.prefs(this).contains("pending");
+ Notification notification(){return buildNotification(this);}
+ static void postLocal(Context c){NotificationChannel channel=new NotificationChannel(CHANNEL,"Закреплённый квест",NotificationManager.IMPORTANCE_LOW);channel.setShowBadge(false);NotificationManager manager=c.getSystemService(NotificationManager.class);manager.createNotificationChannel(channel);try{manager.notify(ID,buildNotification(c));}catch(SecurityException ignored){}}
+ static Notification buildNotification(Context context){
+  JSONObject state=PhoneClient.cache(context);try{if(MobileStore.hasJournal(context))state=MobileStore.notificationState(context);}catch(Exception ignored){}JSONObject q=state.optJSONObject("quest");boolean pending=PhoneClient.prefs(context).contains("pending");
   String title=q==null?"Silk Quest · нить с компьютером":q.optString("title","Текущий квест");
   String detail=q==null?"Выбери квест на ПК через ··· → Закрепить на телефоне":pending?"Завершение ожидает Wi-Fi":q.optBoolean("done")?"✧ Квест завершён · "+Beads.amount(state.optLong("balance")):q.optInt("completed")+" из "+q.optInt("total")+" · +"+Beads.amount(q.optInt("reward"));
-  Intent open=new Intent(this,MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);PendingIntent content=PendingIntent.getActivity(this,0,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
-  Notification.Builder b=new Notification.Builder(this,CHANNEL).setSmallIcon(R.drawable.ic_quest).setColor(Color.rgb(194,91,88)).setContentTitle(title).setContentText(detail).setSubText(PhoneClient.prefs(this).getString("status","Подключаемся по Wi-Fi")).setContentIntent(content).setOnlyAlertOnce(true).setOngoing(true).setShowWhen(false).setCategory(Notification.CATEGORY_STATUS).setVisibility(Notification.VISIBILITY_PRIVATE);
+  Intent open=new Intent(context,MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP);PendingIntent content=PendingIntent.getActivity(context,0,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+  Notification.Builder b=new Notification.Builder(context,CHANNEL).setSmallIcon(R.drawable.ic_quest).setColor(Color.rgb(194,91,88)).setContentTitle(title).setContentText(detail).setSubText(PhoneClient.prefs(context).getString("status","Подключаемся по Wi-Fi")).setContentIntent(content).setOnlyAlertOnce(true).setOngoing(true).setShowWhen(false).setCategory(Notification.CATEGORY_STATUS).setVisibility(Notification.VISIBILITY_PRIVATE);
   String notes=q==null?"":q.optString("notes");b.setStyle(new Notification.BigTextStyle().bigText(detail+(notes.isEmpty()?"":"\n"+notes)));
   if(q!=null&&!q.optBoolean("done")&&!pending){
    String generation=state.optString("generation"),version=state.optString("questVersion"),id=q.optString("id");
-   Intent complete=new Intent(this,QuestActionReceiver.class).setAction("complete").setData(Uri.parse("silkquest://complete/"+id+"/"+generation+"/"+version)).putExtra("id",id).putExtra("generation",generation).putExtra("questVersion",version);
-   b.addAction(new Notification.Action.Builder(null,"✓ Завершить",PendingIntent.getBroadcast(this,1,complete,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE)).build());
+   Intent complete=new Intent(context,QuestActionReceiver.class).setAction("complete").setData(Uri.parse("silkquest://complete/"+id+"/"+generation+"/"+version)).putExtra("id",id).putExtra("generation",generation).putExtra("questVersion",version);
+   b.addAction(new Notification.Action.Builder(null,"✓ Завершить",PendingIntent.getBroadcast(context,1,complete,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE)).build());
   }
-  Intent refresh=new Intent(this,QuestActionReceiver.class).setAction("refresh");b.addAction(new Notification.Action.Builder(null,"Обновить",PendingIntent.getBroadcast(this,2,refresh,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE)).build());
-  Intent hide=new Intent(this,QuestActionReceiver.class).setAction("hide");PendingIntent dismiss=PendingIntent.getBroadcast(this,3,hide,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);b.setDeleteIntent(dismiss);b.addAction(new Notification.Action.Builder(null,"Убрать",dismiss).build());return b.build();
+  Intent refresh=new Intent(context,QuestActionReceiver.class).setAction("refresh");b.addAction(new Notification.Action.Builder(null,"Обновить",PendingIntent.getBroadcast(context,2,refresh,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE)).build());
+  Intent hide=new Intent(context,QuestActionReceiver.class).setAction("hide");PendingIntent dismiss=PendingIntent.getBroadcast(context,3,hide,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);b.setDeleteIntent(dismiss);b.addAction(new Notification.Action.Builder(null,"Убрать",dismiss).build());return b.build();
  }
  static void hide(Context c){PhoneClient.prefs(c).edit().putBoolean("enabled",false).putBoolean("online",false).putString("status","Связь приостановлена. Последний квест сохранён.").apply();c.stopService(new Intent(c,SyncService.class));c.getSystemService(NotificationManager.class).cancel(ID);}
  @Override public void onDestroy(){stopped=true;HttpsURLConnection c=current;if(c!=null)c.disconnect();if(worker!=null)worker.interrupt();if(PhoneClient.prefs(this).getBoolean("enabled",false))stopForeground(STOP_FOREGROUND_DETACH);else stopForeground(STOP_FOREGROUND_REMOVE);super.onDestroy();}

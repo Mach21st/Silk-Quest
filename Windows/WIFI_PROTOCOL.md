@@ -35,3 +35,17 @@ Run `SilkJournal.exe --verify-phone`. It uses an isolated demo journal and loopb
 A phone completion is acknowledged only after a successful write-through atomic journal save. Pairing is subject to the same rule. On storage failure the server returns 503, restores the pre-action task/reward state, and does not publish unsaved changes. Android keeps its command queued on 503. Completion acknowledgements update the cached state and clear the matching command together. Tests lock the actual temporary save file to reproduce failures, including rollback after mutation.
 
 Snapshot revisions now change only when the phone-visible payload changes, rather than for every local UI save. A completion stamp prevents stale offline actions from re-closing a quest that was completed and reopened on PC. Desktop undo is available for 10 seconds and rolls back only affected completion marks and newly granted reward claims, preserving subsequent text edits. Snapshot restore retains the current device credentials and invalidates the phone pin generation.
+
+# Full journal sync · protocol 2 (preview)
+
+Legacy pairing, TLS fingerprint pinning, private IPv4 restriction and `/api/state` notification snapshots remain compatible.
+
+`POST /api/sync` requires the paired bearer token and rejects browser Origin headers. Request: `{journalId, after, operations}`. Empty journalId permits first import of newly created offline entities. A nonempty identity must match the PC journal; a mismatch yields 409 rather than replacing the phone journal.
+
+Operations have a random durable `id`, `kind`, `entity`, `target`, optional `field`, `value` and `base`. Kinds: create, set, complete, delete, buy, pin. A field set accepts the old field only when it matches base or already equals the desired value. Completion compares its done flag plus stamp, so reopening on PC cannot be silently undone by an old phone action. Deletion compares the whole subtree, ignoring only list rank. Purchases compare current price and available balance. Device-local timer, language, appearance and credentials are excluded.
+
+The PC stages the whole batch on a cloned journal, using its existing completion and purchase ledger. A conflict yields 409 with current state and the first disputed operation; nothing in the batch is committed. Successful batches persist effects and operation IDs together before returning 200 with state, revision and acknowledged IDs. Disk errors yield 503. Invalid operations yield 422. A revision match on an empty queue returns a small unchanged response rather than retransmitting images.
+
+The phone atomically stores journal and outbox in app-private AtomicFile storage. Only acknowledged IDs are removed. Edits made during a request are replayed over the received state. Restore/reset generations and pairing tokens invalidate in-flight responses. Conflict choices rebase a phone edit, or discard the disputed PC-overridden edit while preserving other pending work. Purchases that no longer fit the balance remain disputed rather than producing a negative balance.
+
+Limits: 128 operations or approximately 14 MiB per phone batch, 16 MiB request bodies, 32 MiB response bodies, 5,000 quests, 25 nesting levels, 1,000 shop items. Imported phone images are downscaled to 1024 pixels. Local backup and reset do not copy pairing credentials.

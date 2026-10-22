@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; base-uri 'none'; form-action 'none'"><title>Silk Quest</title><link rel="stylesheet" href="style.css"><script src="app.js" defer></script></head>
+<body>
+<svg class="symbols" aria-hidden="true"><defs>
+<symbol id="i-today" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><path d="M12 1v6m0 10v6M1 12h6m10 0h6M12 6l4 6-4 6-4-6Z"/></symbol>
+<symbol id="i-quests" viewBox="0 0 24 24"><path d="M5 3h14v19l-7-5-7 5ZM5 3l7 7 7-7"/></symbol>
+<symbol id="i-journey" viewBox="0 0 24 24"><path d="m2 5 7-3 6 3 7-3v17l-7 3-6-3-7 3Zm7-3v17m6-14v17"/></symbol>
+<symbol id="i-shop" viewBox="0 0 24 24"><path d="M4 8h16l1 13H3ZM8 8V6a4 4 0 0 1 8 0v2m-8 3h.01M16 11h.01"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3M4 4l2 2m12 12 2 2M4 20l2-2M18 6l2-2"/></symbol>
+<symbol id="i-beads" viewBox="0 0 24 24"><path d="M12 2c3 0 3 4 0 4s-3-4 0-4Zm-5 5c3 0 3 4 0 4s-3-4 0-4Zm10 0c3 0 3 4 0 4s-3-4 0-4Zm-10 6c3 0 3 4 0 4s-3-4 0-4Zm10 0c3 0 3 4 0 4s-3-4 0-4Zm-5 5c3 0 3 4 0 4s-3-4 0-4ZM9 20l-2-3m8 0-2 3M10 4 8 7m6-3 2 3"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 6"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/></symbol>
+</defs></svg>
+<div class="botanical" aria-hidden="true"><svg viewBox="0 0 320 640"><g fill="none" stroke="currentColor"><path d="M170 640C60 420 210 260 115 40M235 640C145 420 300 250 215 110M90 640C5 410 100 270 35 190"/></g><g fill="currentColor"><path d="M126 188Q66 169 74 112q41 16 52 76M139 270q-7-68 40-104 13 60-40 104M117 380q-57-32-48-85 50 20 48 85M127 455q3-65 52-81 8 50-52 81M152 530q-61-36-58-83 48 13 58 83M220 245q-48-26-37-81 37 18 37 81M222 351q10-70 53-93 4 60-53 93M204 449q-52-28-48-74 49 11 48 74M209 520q13-50 51-63-2 48-51 63M62 330q-47-11-47-59 39 8 47 59M60 437q3-48 40-69 11 43-40 69M61 527q-41-16-42-57 43 7 42 57"/></g></svg></div>
+<header><div class="brand"><span class="sigil">✧</span><span id="brand">Журнал странника</span></div><button class="balance" id="balanceButton" aria-label="Бусы"><svg><use href="#i-beads"/></svg><span id="balance">0</span></button></header>
+<main id="page"></main>
+<div id="focusDock" hidden></div>
+<nav id="nav" aria-label="Основные вкладки"><div class="nav-marker"></div></nav>
+<div id="shade" hidden></div><section id="sheet" role="dialog" aria-modal="true" hidden></section>
+<div id="toast" role="status"></div>
+</body></html>

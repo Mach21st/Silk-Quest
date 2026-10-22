@@ -139,7 +139,7 @@ public sealed partial class MainWindow
   },true);
   buy.IsEnabled=app.State.Rosaries>=item.Price;dialog.Footer.Children.Add(buy);
   if(!buy.IsEnabled)error.Text=L.F("Не хватает {0}",L.Beads(item.Price-app.State.Rosaries,true));
-  void UpdateAccount(){balance.Text=L.F("Твой баланс: {0}",L.Beads(app.State.Rosaries));buy.IsEnabled=app.State.Rosaries>=item.Price;error.Text=buy.IsEnabled?"":L.F("Не хватает {0}",L.Beads(item.Price-app.State.Rosaries,true));}
+  void UpdateAccount(){var live=app.State.ShopItems.Find(x=>x.Id==item.Id);if(live==null||!System.Text.Json.Nodes.JsonNode.DeepEquals(MobileSync.ItemDto(live),MobileSync.ItemDto(item))){dialog.Close();return;}balance.Text=L.F("Твой баланс: {0}",L.Beads(app.State.Rosaries));buy.IsEnabled=app.State.Rosaries>=item.Price;error.Text=buy.IsEnabled?"":L.F("Не хватает {0}",L.Beads(item.Price-app.State.Rosaries,true));}
   app.Changed+=UpdateAccount;dialog.Closed+=(_,_)=>app.Changed-=UpdateAccount;
   var edit=UI.Button(L.T("Изменить  ···"),()=>{dialog.Close();EditShopItem(item);});edit.FontSize=14;edit.Padding=new Thickness(8);dialog.Footer.Children.Add(edit);dialog.Show();
  }

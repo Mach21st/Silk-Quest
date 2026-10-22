@@ -1,0 +1,1 @@
+package android.content; import java.io.File; public class Context {final File dir; public Context(File d){dir=d;dir.mkdirs();} public File getFilesDir(){return dir;}}

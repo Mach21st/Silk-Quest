@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.0.0 — Your journal, together
+
+- Full Android journal with nested quests, editing, local focus, rewards, shop, square image cropping and notification pinning.
+- Bidirectional home Wi-Fi sync with a durable offline queue and explicit conflict choices.
+- Atomic desktop updates and durable operation receipts prevent duplicate rewards or purchases.
+- Windows update preserves existing journals and supports the new mobile protocol.
+- Tighter mobile scroll boundaries, dynamic focus clearance and faster task-tree lookup.
+- Android 16 system insets and Windows APK asset-path packaging fixes.
+- Android model, real WebView, offline persistence, scroll, Windows UI and local HTTPS regression checks.
+
 ## 1.0.0 — First public release
 
 - Nested main quests, side quests and steps, progress and collapsible task trees.

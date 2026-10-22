@@ -126,6 +126,13 @@ static class ShopEditor
    if(string.IsNullOrWhiteSpace(name.Text)){error.Text=L.T("Добавь название товара.");name.Focus();return;}
    if(image.Length==0){error.Text=L.T("Выбери изображение товара.");return;}
    var item=new ShopItem{Id=existing?.Id??Guid.NewGuid().ToString("N"),Name=name.Text.Trim(),Description=description.Text.Trim(),Price=price.Value,Image=image,CropX=crop.X,CropY=crop.Y,Zoom=crop.Zoom};
+   if(existing!=null)
+   {
+    var current=app.State.ShopItems.Find(x=>x.Id==existing.Id);
+    var merged=MobileSync.MergeShopDraft(existing,item,current,out bool conflict);
+    if(conflict&&MessageBox.Show(dialog,L.Language=="en"?"This item changed on your phone while the editor was open. Keep your edits to the conflicting fields? Other changes will be preserved.":"Пока редактор был открыт, товар изменился на телефоне. Оставить твои правки в спорных полях? Остальные изменения сохранятся.",L.T("Лавка"),MessageBoxButton.YesNo,MessageBoxImage.Question)!=MessageBoxResult.Yes)return;
+    item=merged;
+   }
    if(app.SaveShopItem(item))dialog.Close();else error.Text=L.T("Не удалось сохранить товар. Проверь доступ к папке журнала.");
   },true));
   if(existing!=null)

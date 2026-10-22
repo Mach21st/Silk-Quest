@@ -97,6 +97,7 @@ static class SelfTest
   var legacy=System.Text.Json.Nodes.JsonNode.Parse(JsonSerializer.Serialize(recovered))!.AsObject();legacy.Remove("FocusSessionMinutes");legacy["FocusMinutes"]=37;legacy["FocusSeconds"]=2000;File.WriteAllText(store.FilePath,legacy.ToJsonString());
   var migrated=store.Load();Check(migrated.FocusMinutes==37&&migrated.FocusSessionMinutes==37&&migrated.FocusSeconds==2000,"Older journals retain timer duration and remaining time after migration");
   PolishTests.Models(Check);
+  MobileSyncTests.Models(Check);
   File.WriteAllText(Path.Combine(AppContext.BaseDirectory,"self-test-passed.txt"),$"{count} checks passed\n"+DateTime.Now.ToString("O"));
   // Tests use only their freshly created folder, and retain it for inspection.
  }

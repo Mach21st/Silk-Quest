@@ -4,3 +4,7 @@ build/
 *.jks
 *.keystore
 local.properties
+
+tests/lib/
+tests/classes/
+tests/test-data-*/

@@ -43,7 +43,7 @@ final class PhoneClient {
   c.setConnectTimeout(6000);c.setReadTimeout(32000);c.setInstanceFollowRedirects(false);c.setUseCaches(false);if(token!=null)c.setRequestProperty("Authorization","Bearer "+token);if(hook!=null)hook.opened(c);
   try{
    if(body!=null){byte[] bytes=body.toString().getBytes(StandardCharsets.UTF_8);c.setRequestMethod("POST");c.setDoOutput(true);c.setRequestProperty("Content-Type","application/json; charset=utf-8");c.setFixedLengthStreamingMode(bytes.length);try(OutputStream out=c.getOutputStream()){out.write(bytes);}}
-   int code=c.getResponseCode();InputStream in=code>=400?c.getErrorStream():c.getInputStream();if(in==null)throw new IOException("Пустой ответ компьютера.");ByteArrayOutputStream out=new ByteArrayOutputStream();try(InputStream source=in){byte[] block=new byte[4096];int n;while((n=source.read(block))!=-1){if(out.size()+n>1048576)throw new IOException("Слишком большой ответ.");out.write(block,0,n);}}
+   int code=c.getResponseCode();InputStream in=code>=400?c.getErrorStream():c.getInputStream();if(in==null)throw new IOException("Пустой ответ компьютера.");ByteArrayOutputStream out=new ByteArrayOutputStream();try(InputStream source=in){byte[] block=new byte[4096];int n;while((n=source.read(block))!=-1){if(out.size()+n>32*1024*1024)throw new IOException("Слишком большой ответ.");out.write(block,0,n);}}
    return new Response(code,new JSONObject(out.toString("UTF-8")));
   }finally{if(hook!=null)hook.opened(null);c.disconnect();}
  }

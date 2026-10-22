@@ -1,58 +1,53 @@
-# Silk Quest 1.0 — Your first quest
+# 🧵 Silk Quest 2.0 — Your journal, together
 
 <div align="center">
 
-### A little journal for a bigger journey.
+### Your next quest, wherever you pick it up.
 
-A Silksong-inspired home for your quests, focused work, and rewards worth earning.
+A Silksong-inspired quest journal for Windows and Android, connected over your home Wi-Fi.
 
-**[🖥️ Download for Windows](https://github.com/Mach21st/Silk-Quest/releases/download/v1.0.0/SilkQuest-Windows-x64.zip)** · **[📱 Android companion](https://github.com/Mach21st/Silk-Quest/releases/download/v1.0.0/SilkQuest-Android.apk)**
+**[🖥️ Download for Windows](https://github.com/Mach21st/Silk-Quest/releases/download/v2.0.0/SilkQuest-Windows-x64.zip)** · **[📱 Download Android APK](https://github.com/Mach21st/Silk-Quest/releases/download/v2.0.0/SilkQuest-Android.apk)**
 
 </div>
 
-![Silk Quest — your quest journal](https://raw.githubusercontent.com/Mach21st/Silk-Quest/main/docs/images/journal.png)
+![Silk Quest — your quest journal](https://raw.githubusercontent.com/Mach21st/Silk-Quest/v2.0.0/docs/images/journal.png)
 
-## 🧵 Follow your own thread
+## 📱 A full journal in your pocket
 
-- **Quests that unfold** — nested steps, progress, and main or side quests.
-- **Room to focus** — a 1–180 minute timer with an unwinding thread animation.
-- **Keep your quest close** — a movable, compact window above your other apps.
-- **Rewards you choose** — earn rosaries and spend them in your personal reward shop.
-- **Progress kept safe** — undo, export, and automatic local snapshots.
+Create quests and nested steps, complete tasks, earn rosaries and build your own reward shop. Add pictures, adjust their square crop, choose prices and record purchases. Keep a quest in your notification shade, or start a focus session on your phone.
 
----
+## 🔄 One journal, two devices
+
+Quests, rewards, purchases, shop pictures and your pinned quest sync in both directions over home Wi-Fi. Offline edits stay on the phone until your PC is reachable. When the same field changes on both devices, you choose which edit to keep.
+
+**No account or cloud server.** Focus timers and appearance settings stay independent.
 
 ## 🖥️ Windows · the journal
 
 | Download | What you get |
 | --- | --- |
-| **[SilkQuest-Windows-x64.zip](https://github.com/Mach21st/Silk-Quest/releases/download/v1.0.0/SilkQuest-Windows-x64.zip)** | **Recommended** — app, user guide, and third-party notices |
-| [SilkQuest.exe](https://github.com/Mach21st/Silk-Quest/releases/download/v1.0.0/SilkQuest.exe) | Standalone executable |
-
-Extract the ZIP into a writable folder and open **SilkQuest.exe**.
+| **[SilkQuest-Windows-x64.zip](https://github.com/Mach21st/Silk-Quest/releases/download/v2.0.0/SilkQuest-Windows-x64.zip)** | Recommended — app, guide and third-party notices |
+| [SilkQuest.exe](https://github.com/Mach21st/Silk-Quest/releases/download/v2.0.0/SilkQuest.exe) | Standalone executable |
 
 **Windows 10/11 · x64 · .NET included**
 
-## 📱 Android · a quest in your pocket
+## 📲 Android · install the APK
 
-**[Download SilkQuest-Android.apk](https://github.com/Mach21st/Silk-Quest/releases/download/v1.0.0/SilkQuest-Android.apk)**
+**[Download SilkQuest-Android.apk](https://github.com/Mach21st/Silk-Quest/releases/download/v2.0.0/SilkQuest-Android.apk)**
 
-An optional companion that keeps a quest in your notification shade. Pair it from **Settings → Phone · Wi-Fi** while both devices are on the same home network. Your computer must stay on with the journal running.
+Android 8.0 or later. Install over the previous companion or preview to keep your data. On Windows, open **Settings → Phone · Wi-Fi → Show QR**. On Android, open **Settings → Connect to your PC → Scan QR**.
 
-The companion currently uses Russian UI. Camera and background notification behavior have not yet been verified on a physical Android device.
+Use version **2.0 on both devices** for full sync. Your PC needs to be on only while exchanging changes; the mobile journal works offline.
 
-[Pairing guide →](https://github.com/Mach21st/Silk-Quest/blob/main/Android/README.md)
+## ✨ A little more polish
 
----
+- Cleaner mobile scroll boundaries, with extra clearance only when the focus panel is visible.
+- Faster nested-task lookup and less idle timer work.
+- Correct Android 16 navigation-bar spacing.
+- Fixed APK packaging and added tests that launch the real Android WebView.
 
 ## 💾 Keep your progress
 
-Your journal lives in the **data** folder beside the executable. When updating, quit through the tray menu, replace the app, and keep that folder.
+Before updating Windows, quit through the tray menu and back up your **data** folder. Replace the executable and keep that folder beside it. The release contains no personal journal or pairing credentials.
 
-No account or cloud server required. Release downloads contain no personal journal or pairing credentials.
-
-[Verify downloads · SHA256 checksums](https://github.com/Mach21st/Silk-Quest/releases/download/v1.0.0/SHA256SUMS.txt)
-
-## 💬 Along the way
-
-[Windows guide](https://github.com/Mach21st/Silk-Quest/blob/main/Windows/README.md) · [Source code](https://github.com/Mach21st/Silk-Quest) · [Report a bug](https://github.com/Mach21st/Silk-Quest/issues/new)
+[Android guide](https://github.com/Mach21st/Silk-Quest/blob/v2.0.0/Android/README.md) · [Windows guide](https://github.com/Mach21st/Silk-Quest/blob/v2.0.0/Windows/README.md) · [SHA256 checksums](https://github.com/Mach21st/Silk-Quest/releases/download/v2.0.0/SHA256SUMS.txt) · [Report a bug](https://github.com/Mach21st/Silk-Quest/issues/new)

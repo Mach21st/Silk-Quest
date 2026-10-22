@@ -43,6 +43,7 @@ static class PhoneTests
   app.Complete(q,false);Check((await Post("/api/complete",request)).StatusCode==HttpStatusCode.Conflict&&!q.Done,"Reopened quest rejects stale completion even when visible content matches");q.Title+=" changed";app.Commit();Check((await Post("/api/complete",request)).StatusCode==HttpStatusCode.Conflict&&!q.Done,"Changed quest rejects stale offline action");
   using var current=JsonDocument.Parse(await client.GetStringAsync("/api/state"));long rev=current.RootElement.GetProperty("revision").GetInt64();var waiting=client.GetStringAsync("/api/state?after="+rev);await Task.Delay(100);app.PinPhone(app.State.Quests[2].Id);using var changed=JsonDocument.Parse(await waiting);Check(changed.RootElement.GetProperty("quest").GetProperty("id").GetString()==app.State.Quests[2].Id,"Long poll delivers pin changes");
   Check((await Post("/api/complete",request)).StatusCode==HttpStatusCode.Conflict,"Old notification cannot complete replaced pin");
+  await MobileSyncTests.Network(app,client);
   Check(app.Store.Load().PhoneToken==token,"Paired credentials persist");app.Phone.Revoke();Check((await client.GetAsync("/api/state")).StatusCode==HttpStatusCode.Unauthorized,"Revocation invalidates token");
   app.SetPhoneSync(false);Check(!app.Phone.Listening,"Listener stops cleanly");
  }

@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="app.silkquest.tests">
+ <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="36"/>
+ <application android:label="Silk Quest startup tests"/>
+ <instrumentation android:name=".StartupTests" android:targetPackage="app.silkquest.companion" android:label="Real WebView startup"/>
+</manifest>

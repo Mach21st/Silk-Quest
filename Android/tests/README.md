@@ -1,0 +1,1 @@
+Run Windows `--self-test` first, then pass its generated `mobile-sync-fixture.json` to `run.ps1 -Fixture ABSOLUTE_PATH`. JVM adapters test storage and synchronization logic; they do not replace physical Android runtime tests.

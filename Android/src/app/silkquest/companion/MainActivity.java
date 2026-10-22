@@ -4,73 +4,109 @@ import android.Manifest;
 import android.app.*;
 import android.content.*;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.graphics.Typeface;
-import android.graphics.drawable.GradientDrawable;
+import android.graphics.*;
+import android.net.Uri;
 import android.os.*;
-import android.view.*;
+import android.webkit.*;
 import android.widget.*;
-import org.json.JSONObject;
+import android.view.View;
+import android.view.Gravity;
+import org.json.*;
+import java.io.*;
+import java.util.concurrent.*;
 
 public final class MainActivity extends Activity {
- LinearLayout page;EditText linkField;boolean pairing;
- ScrollView scrollView;TextView statusView;String screenSignature="",renderedQuest="";boolean renderedPairing;
- final BroadcastReceiver updates=new BroadcastReceiver(){public void onReceive(Context c,Intent i){if(!pairing){if(!PhoneClient.paired(c)){pairing=true;render();}else if(!signature().equals(screenSignature))render();else if(statusView!=null)statusView.setText(PhoneClient.statusText(c));}}};
- String signature(){return PhoneClient.prefs(this).getString("cache","")+"|"+PhoneClient.prefs(this).getString("pending","")+"|"+PhoneClient.prefs(this).getBoolean("enabled",false)+"|"+canNotify();}
- int dp(float n){return (int)(getResources().getDisplayMetrics().density*n+.5f);}
- @Override public void onCreate(Bundle b){super.onCreate(b);pairing=!PhoneClient.paired(this);render();if(b!=null){if(pairing&&linkField!=null)linkField.setText(b.getString("pairLink",""));int y=b.getInt("scroll",0);scrollView.post(()->scrollView.scrollTo(0,y));}else handleLink(getIntent());if(PhoneClient.paired(this)&&PhoneClient.prefs(this).getBoolean("enabled",true)&&canNotify())startSync();}
- @Override protected void onSaveInstanceState(Bundle out){super.onSaveInstanceState(out);out.putInt("scroll",scrollView==null?0:scrollView.getScrollY());if(pairing&&linkField!=null)out.putString("pairLink",linkField.getText().toString());}
+ static final String APP_BASE="https://appassets.androidplatform.net/assets/mobile/";
+ FrameLayout root;LinearLayout startup;TextView startupText;Button retry;String startupDetail="";
+ final Runnable bootTimeout=()->{if(!this.ready)showStartupError("The interface did not finish starting.");};
+ WebView web;boolean visible,ready,pairing;String incoming="";String exportData;String lastView="";
+ final Handler handler=new Handler(Looper.getMainLooper());
+ final java.util.concurrent.atomic.AtomicBoolean syncQueued=new java.util.concurrent.atomic.AtomicBoolean();
+ final ExecutorService io=Executors.newSingleThreadExecutor();
+ final Runnable pulse=new Runnable(){public void run(){if(visible){sync();handler.postDelayed(this,10000);}}};
+ final BroadcastReceiver updates=new BroadcastReceiver(){public void onReceive(Context c,Intent i){deliver();}};
+ @Override public void onCreate(Bundle saved){super.onCreate(saved);getWindow().setStatusBarColor(Color.rgb(15,24,31));getWindow().setNavigationBarColor(Color.rgb(15,24,31));
+  root=new FrameLayout(this);root.setBackgroundColor(Color.rgb(15,24,31));
+  web=new WebView(this);web.setBackgroundColor(Color.rgb(15,24,31));web.setOverScrollMode(android.view.View.OVER_SCROLL_NEVER);
+  WebSettings settings=web.getSettings();settings.setJavaScriptEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setDomStorageEnabled(false);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);settings.setJavaScriptCanOpenWindowsAutomatically(false);settings.setSupportMultipleWindows(false);
+  root.setOnApplyWindowInsetsListener((v,insets)->{v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets;});
+  web.addJavascriptInterface(new Bridge(),"SilkNative");
+  web.setWebChromeClient(new WebChromeClient(){
+   @Override public boolean onConsoleMessage(ConsoleMessage message){if(message.messageLevel()==ConsoleMessage.MessageLevel.ERROR&&!ready)showStartupError("Interface script error (line "+message.lineNumber()+"): "+message.message());return true;}
+  });
+  web.setWebViewClient(new WebViewClient(){
+   @Override public boolean shouldOverrideUrlLoading(WebView v,WebResourceRequest r){return !r.getUrl().toString().equals(APP_BASE+"index.html");}
+   @Override public WebResourceResponse shouldInterceptRequest(WebView v,WebResourceRequest r){
+    Uri uri=r.getUrl();
+    if(!"https".equals(uri.getScheme())||!"appassets.androidplatform.net".equals(uri.getHost())||uri.getPort()!=-1)return blocked();
+    String prefix="/assets/mobile/",path=uri.getPath();
+    if(path==null||!path.startsWith(prefix))return blocked();
+    String file=path.substring(prefix.length());
+    if(!file.equals("index.html")&&!file.equals("app.js")&&!file.equals("style.css"))return blocked();
+    try{return new WebResourceResponse(file.endsWith(".js")?"text/javascript":file.endsWith(".css")?"text/css":"text/html","UTF-8",getAssets().open("mobile/"+file));}
+    catch(IOException error){handler.post(()->showStartupError("Missing interface resource: "+file));return blocked();}
+   }
+   @Override public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError error){if(r.isForMainFrame())showStartupError("WebView loading error "+error.getErrorCode());}
+   @Override public boolean onRenderProcessGone(WebView v,RenderProcessGoneDetail detail){ready=false;showStartupError("Android WebView stopped. Close and reopen Silk Quest.");return true;}
+  });
+  root.addView(web,new FrameLayout.LayoutParams(-1,-1));
+  startup=new LinearLayout(this);startup.setOrientation(LinearLayout.VERTICAL);startup.setGravity(Gravity.CENTER);startup.setPadding(36,36,36,36);startup.setBackgroundColor(Color.rgb(15,24,31));
+  startupText=new TextView(this);startupText.setTextColor(Color.rgb(232,221,203));startupText.setTextSize(18);startupText.setGravity(Gravity.CENTER);startup.addView(startupText);
+  retry=new Button(this);retry.setText("Повторить / Retry");retry.setOnClickListener(v->loadInterface());startup.addView(retry);
+  root.addView(startup,new FrameLayout.LayoutParams(-1,-1));setContentView(root);web.post(()->loadInterface());handleLink(getIntent());if(PhoneClient.prefs(this).getBoolean("enabled",false)&&canNotify()){if(PhoneClient.paired(this))startSync();else SyncService.postLocal(this);}
+ }
+ void loadInterface(){
+  ready=false;lastView="";startupDetail="";startup.setVisibility(View.VISIBLE);startupText.setText("Silk Quest · Загрузка / Loading…");retry.setVisibility(View.GONE);handler.removeCallbacks(bootTimeout);
+  try{web.loadUrl(APP_BASE+"index.html");handler.postDelayed(bootTimeout,8000);}
+  catch(Exception error){showStartupError("Android WebView: "+error.getClass().getSimpleName()+": "+error.getMessage());}
+ }
+ void showStartupError(String detail){if(ready||isDestroyed())return;handler.removeCallbacks(bootTimeout);startupDetail=detail;startupText.setText("Не удалось открыть интерфейс. / Could not start the interface.\n\n"+detail+"\n\nSilk Quest 2.0.0");retry.setVisibility(View.VISIBLE);startup.setVisibility(View.VISIBLE);}
+ static WebResourceResponse blocked(){return new WebResourceResponse("text/plain","UTF-8",new ByteArrayInputStream(new byte[0]));}
  @Override protected void onNewIntent(Intent i){super.onNewIntent(i);setIntent(i);handleLink(i);}
- void handleLink(Intent i){if(i.getData()!=null&&"silkquest".equals(i.getData().getScheme())){pairing=true;render();linkField.setText(i.getData().toString());}}
- @Override protected void onStart(){super.onStart();IntentFilter f=new IntentFilter(SyncService.UPDATED);if(Build.VERSION.SDK_INT>=33)registerReceiver(updates,f,Context.RECEIVER_NOT_EXPORTED);else registerReceiver(updates,f);}
- @Override protected void onStop(){unregisterReceiver(updates);if(!pairing&&scrollView!=null)PhoneClient.prefs(this).edit().putInt("screenScroll",scrollView.getScrollY()).apply();super.onStop();}
- TextView text(String value,int size,int color){TextView t=new TextView(this);t.setText(value);t.setTextColor(color);t.setTextSize(size);t.setTypeface(Typeface.create("serif",Typeface.NORMAL));t.setPadding(0,dp(5),0,dp(10));t.setLineSpacing(dp(3),1);page.addView(t);return t;}
- void rule(){View v=new View(this);v.setBackgroundColor(Color.rgb(72,77,76));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,dp(1));p.setMargins(0,dp(16),0,dp(16));page.addView(v,p);}
- Button button(String title,boolean primary,Runnable action){Button b=new Button(this);b.setText(title);b.setAllCaps(false);b.setTextColor(Color.rgb(232,221,203));b.setTextSize(17);b.setTypeface(Typeface.create("serif",0));GradientDrawable bg=new GradientDrawable();bg.setColor(Color.parseColor(primary?"#873C3C":"#19252E"));bg.setCornerRadius(dp(7));bg.setStroke(dp(1),Color.parseColor(primary?"#BD5A52":"#3D4850"));b.setBackground(bg);b.setPadding(dp(12),dp(10),dp(12),dp(10));LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-1,-2);p.setMargins(0,dp(6),0,dp(8));page.addView(b,p);b.setOnClickListener(v->action.run());return b;}
- void render(){
-  JSONObject cachedQuest=PhoneClient.cache(this).optJSONObject("quest");String nextQuest=cachedQuest==null?"":cachedQuest.optString("id");int previousY=scrollView==null?PhoneClient.prefs(this).getInt("screenScroll",0):scrollView.getScrollY();if((scrollView==null&&pairing)||(scrollView!=null&&(pairing!=renderedPairing||!nextQuest.equals(renderedQuest))))previousY=0;final int restoreY=previousY;renderedPairing=pairing;renderedQuest=nextQuest;screenSignature=signature();
-  ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setBackgroundColor(Color.parseColor("#111B22"));scroll.setOnApplyWindowInsetsListener((v,insets)->{v.setPadding(0,insets.getSystemWindowInsetTop(),0,insets.getSystemWindowInsetBottom());return insets;});
-  scrollView=scroll;scroll.post(()->scroll.scrollTo(0,restoreY));statusView=null;
-  page=new LinearLayout(this);page.setOrientation(LinearLayout.VERTICAL);page.setPadding(dp(25),dp(28),dp(25),dp(28));scroll.addView(page);setContentView(scroll);
-  text("✧  Журнал странника",16,Color.parseColor("#B8AB96"));text("Silk Quest",34,Color.parseColor("#E8DDCB"));rule();
-  if(pairing||!PhoneClient.paired(this)){renderPair();return;}
-  JSONObject state=PhoneClient.cache(this),q=state.optJSONObject("quest");statusView=text(PhoneClient.statusText(this),14,Color.parseColor("#929CA5"));
-  if(q==null)text("Твой следующий квест",27,Color.parseColor("#E8DDCB"));else{
-   text(q.optBoolean("done")?"✧ ЗАВЕРШЕНО":"● В ФОКУСЕ",12,Color.parseColor("#C25B58"));text(q.optString("title"),28,Color.parseColor("#E8DDCB"));
-   text(q.optString("notes"),17,Color.parseColor("#ADB2AE"));text(q.optInt("completed")+" из "+q.optInt("total")+(q.optBoolean("done")?" · награда учтена":" · награда "+Beads.amount(q.optInt("reward"))),15,Color.parseColor("#C9BDA8"));
-   if(PhoneClient.prefs(this).contains("pending"))text("Завершение ожидает отправки по Wi-Fi.",15,Color.parseColor("#D79883"));
-   if(!q.optBoolean("done")&&!PhoneClient.prefs(this).contains("pending"))button("✓ Завершить квест",true,()->{try{PhoneClient.queueCompletion(this,state);requestSync();}catch(Exception e){message("Не удалось сохранить действие.");}});
-  }
-  rule();text("Бусы · "+state.optLong("balance"),21,Color.parseColor("#E8DDCB"));
-  text("Выбери задачу на компьютере: ··· → Закрепить на телефоне. Вне домашней сети здесь остаётся последний полученный квест.",15,Color.parseColor("#929CA5"));
-  button(canNotify()?"Обновить и показать уведомление":"Разрешить уведомления",true,()->requestSync());
-  button("Убрать уведомление и приостановить связь",false,()->{SyncService.hide(this);render();});
-  button("Отключить этот компьютер",false,()->new AlertDialog.Builder(this).setTitle("Отключить компьютер?").setMessage("Неотправленное завершение будет удалено. Квесты на компьютере останутся.").setNegativeButton("Отмена",null).setPositiveButton("Отключить",(d,w)->{SyncService.hide(this);PhoneClient.prefs(this).edit().clear().apply();pairing=true;render();}).show());
- }
- void renderPair(){
-  text("Нить между устройствами",25,Color.parseColor("#E8DDCB"));text("1. Подключи телефон и компьютер к одной домашней сети.\n2. На компьютере открой Настройки → Телефон · Wi-Fi и покажи QR.\n3. Отсканируй его здесь.",16,Color.parseColor("#ADB2AE"));
-  button("Сканировать QR",true,()->{if(checkSelfPermission(Manifest.permission.CAMERA)!=PackageManager.PERMISSION_GRANTED)requestPermissions(new String[]{Manifest.permission.CAMERA},2);else scan();});
-  text("Или вставь ссылку подключения",14,Color.parseColor("#929CA5"));linkField=new EditText(this);linkField.setTextSize(14);linkField.setTextColor(Color.parseColor("#E8DDCB"));linkField.setHint("silkquest://pair?…");linkField.setHintTextColor(Color.parseColor("#6C7A80"));linkField.setMinLines(2);linkField.setMaxLines(4);linkField.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);page.addView(linkField);
-  Button connect=button("Подключить компьютер",true,()->connect());connect.setTag("connect");
-  text("Без аккаунта и облака. Соединение шифруется; отпечаток компьютера берётся из QR-кода. Ссылка действует 5 минут. Не передавай её другим людям.",13,Color.parseColor("#929CA5"));
- }
- void scan(){startActivityForResult(new Intent(this,ScanActivity.class),3);}
- @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==3&&result==RESULT_OK&&data!=null){pairing=true;render();linkField.setText(data.getStringExtra("link"));connect();}}
- void connect(){
-  final PhoneClient.PairLink link;try{link=new PhoneClient.PairLink(linkField.getText().toString());}catch(Exception e){message(e.getMessage());return;}
-  View button=page.findViewWithTag("connect");if(button!=null)button.setEnabled(false);text("Соединяем нить…",15,Color.parseColor("#D79883"));
-  new Thread(()->{try{
-   PhoneClient.selectLocalNetwork(this);
-   JSONObject payload=new JSONObject().put("secret",link.secret).put("device",Build.MANUFACTURER+" "+Build.MODEL);
-   PhoneClient.Response response=PhoneClient.request(link.endpoint,link.fingerprint,null,"/api/pair",payload,null);
-   if(response.code==503)throw new java.io.IOException("Компьютер не смог сохранить подключение. Проверь сохранение журнала и покажи новый QR.");if(response.code!=200)throw new java.io.IOException("Код истёк или уже использован. Покажи новый QR на компьютере.");
-   PhoneClient.prefs(this).edit().putString("endpoint",link.endpoint).putString("fingerprint",link.fingerprint).putString("token",response.json.getString("token")).remove("cache").remove("pending").putBoolean("enabled",true).putString("status","Компьютер подключён").apply();
-   runOnUiThread(()->{pairing=false;render();requestSync();});
-  }catch(Exception e){runOnUiThread(()->{if(button!=null)button.setEnabled(true);message(e instanceof javax.net.ssl.SSLException?"Сертификат ПК не совпал. Создай новый QR и подключись заново.":"Не удалось подключиться. Проверь одну Wi-Fi сеть, запущенный журнал и разрешение Windows для частной сети. "+(e.getMessage()==null?"":e.getMessage()));});}},"SilkQuest-pair").start();
- }
+ void handleLink(Intent i){if(i.getData()!=null&&"silkquest".equals(i.getData().getScheme())){incoming=i.getData().toString();if(ready)emit("silkPairLink",incoming);}}
+ @Override protected void onStart(){super.onStart();visible=true;IntentFilter f=new IntentFilter(SyncService.UPDATED);if(Build.VERSION.SDK_INT>=33)registerReceiver(updates,f,Context.RECEIVER_NOT_EXPORTED);else registerReceiver(updates,f);handler.post(pulse);}
+ @Override protected void onStop(){visible=false;handler.removeCallbacks(pulse);unregisterReceiver(updates);super.onStop();}
+ @Override protected void onDestroy(){handler.removeCallbacksAndMessages(null);io.shutdownNow();web.removeJavascriptInterface("SilkNative");web.destroy();super.onDestroy();}
+ @Override public void onBackPressed(){web.evaluateJavascript("window.silkBack && window.silkBack()",null);}
+ void emit(String name,String value){runOnUiThread(()->{if(ready&&!isFinishing()&&!isDestroyed())web.evaluateJavascript("window."+name+" && window."+name+"("+JSONObject.quote(value)+")",null);});}
+ void deliver(){if(!ready)return;try{String current=MobileStore.view(this);if(!current.equals(lastView)){lastView=current;emit("silkState",current);}}catch(Exception e){emit("silkError",e.getMessage()==null?"Не удалось прочитать журнал. Файл сохранён в памяти приложения.":e.getMessage());}}
+ void sync(){if(!PhoneClient.paired(this)||io.isShutdown()||!syncQueued.compareAndSet(false,true))return;io.execute(()->{try{MobileStore.sync(this,null);}catch(Exception e){PhoneClient.prefs(this).edit().putBoolean("online",false).putString("status",e.getMessage()==null?"Нет связи · изменения сохранены на телефоне":e.getMessage()).apply();}finally{syncQueued.set(false);deliver();}});}
+ void wake(){handler.post(()->{sync();if(PhoneClient.prefs(this).getBoolean("enabled",false)&&canNotify()){if(PhoneClient.paired(this))startSync();else SyncService.postLocal(this);}});}
  boolean canNotify(){return (Build.VERSION.SDK_INT<33||checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED)&&getSystemService(NotificationManager.class).areNotificationsEnabled();}
- void requestSync(){if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},1);return;}if(!canNotify()){message("Включи уведомления Silk Quest в настройках Android.");startActivity(new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName()));return;}startSync();render();}
  void startSync(){PhoneClient.prefs(this).edit().putBoolean("enabled",true).apply();startForegroundService(new Intent(this,SyncService.class).setAction("refresh"));}
- @Override public void onRequestPermissionsResult(int request,String[] p,int[] results){super.onRequestPermissionsResult(request,p,results);if(results.length==0)return;if(request==1){if(results[0]==PackageManager.PERMISSION_GRANTED){startSync();render();}else{PhoneClient.prefs(this).edit().putBoolean("enabled",false).apply();message("Для закрепления квеста нужно разрешение на уведомления.");}}if(request==2){if(results[0]==PackageManager.PERMISSION_GRANTED)scan();else message("Можно подключиться вставкой ссылки без доступа к камере.");}}
- void message(String value){Toast.makeText(this,value,Toast.LENGTH_LONG).show();}
+ void notifications(){if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},1);return;}if(!canNotify()){startActivity(new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,getPackageName()));return;}PhoneClient.prefs(this).edit().putBoolean("enabled",true).apply();if(PhoneClient.paired(this))startSync();else SyncService.postLocal(this);deliver();}
+ void connect(String raw){if(pairing)return;pairing=true;io.execute(()->{try{PhoneClient.PairLink link=new PhoneClient.PairLink(raw);PhoneClient.selectLocalNetwork(this);PhoneClient.Response response=PhoneClient.request(link.endpoint,link.fingerprint,null,"/api/pair",new JSONObject().put("secret",link.secret).put("device",Build.MANUFACTURER+" "+Build.MODEL),null);if(response.code!=200)throw new IOException("Код истёк или не сохранён на ПК. Покажи новый QR.");if(!PhoneClient.prefs(this).edit().putString("endpoint",link.endpoint).putString("fingerprint",link.fingerprint).putString("token",response.json.getString("token")).remove("pending").putBoolean("online",false).putString("status","Компьютер подключён").commit())throw new IOException("Не удалось сохранить подключение");MobileStore.sync(this,null);emit("silkConnected","");}catch(Exception e){emit("silkError",e.getMessage()==null?"Нет связи с ПК. Проверь Wi-Fi и запущенный журнал.":e.getMessage());}finally{pairing=false;deliver();}});}
+ public final class Bridge {
+  @JavascriptInterface public void ready(){handler.post(()->{if(isDestroyed()||isFinishing())return;ready=true;handler.removeCallbacks(bootTimeout);startup.setVisibility(View.GONE);lastView="";deliver();if(!incoming.isEmpty())emit("silkPairLink",incoming);});}
+  @JavascriptInterface public void startupError(String detail){handler.post(()->showStartupError(detail==null?"JavaScript startup error":detail.substring(0,Math.min(240,detail.length()))));}
+  @JavascriptInterface public String state(){try{return MobileStore.view(MainActivity.this);}catch(Exception e){return "{\"error\":"+JSONObject.quote(e.toString())+"}";}}
+  @JavascriptInterface public String action(String raw){try{String result=MobileStore.command(MainActivity.this,raw);wake();return result;}catch(Exception e){return "{\"error\":"+JSONObject.quote(e.getMessage())+"}";}}
+  @JavascriptInterface public void preferences(String raw){try{MobileStore.preferences(MainActivity.this,raw);}catch(Exception e){emit("silkError",e.getMessage());}}
+  @JavascriptInterface public void sync(){wake();}
+  @JavascriptInterface public void pair(String raw){handler.post(()->connect(raw));}
+  @JavascriptInterface public void scan(){handler.post(()->{if(checkSelfPermission(Manifest.permission.CAMERA)!=PackageManager.PERMISSION_GRANTED)requestPermissions(new String[]{Manifest.permission.CAMERA},2);else startActivityForResult(new Intent(MainActivity.this,ScanActivity.class),3);});}
+  @JavascriptInterface public void image(){handler.post(()->startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("image/*").addCategory(Intent.CATEGORY_OPENABLE),4));}
+  @JavascriptInterface public void notifyQuest(){handler.post(()->notifications());}
+  @JavascriptInterface public void hideNotification(){handler.post(()->{SyncService.hide(MainActivity.this);deliver();});}
+  @JavascriptInterface public void resolve(boolean phone){try{MobileStore.resolve(MainActivity.this,phone);deliver();wake();}catch(Exception e){emit("silkError",e.getMessage());}}
+  @JavascriptInterface public void exportJournal(){handler.post(()->{try{exportData=MobileStore.export(MainActivity.this);startActivityForResult(new Intent(Intent.ACTION_CREATE_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE).putExtra(Intent.EXTRA_TITLE,"SilkQuest-mobile-backup.json"),5);}catch(Exception e){emit("silkError",e.getMessage());}});}
+  @JavascriptInterface public void importJournal(){handler.post(()->startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("application/json").addCategory(Intent.CATEGORY_OPENABLE),6));}
+  @JavascriptInterface public void resetJournal(){handler.post(()->new AlertDialog.Builder(MainActivity.this).setTitle("Сбросить мобильный журнал?").setMessage("Будет сохранена локальная копия перед сбросом. Для удобного восстановления сначала экспортируй журнал в файл. Компьютер не затрагивается.").setNegativeButton("Отмена",null).setPositiveButton("Сбросить",(d,w)->{try{SyncService.hide(MainActivity.this);MobileStore.reset(MainActivity.this);emit("silkConnected","");deliver();}catch(Exception e){emit("silkError",e.getMessage());}}).show());}
+  @JavascriptInterface public void disconnect(){handler.post(()->new AlertDialog.Builder(MainActivity.this).setTitle("Отключить компьютер?").setMessage("Локальный журнал сохранится. Перед сменой компьютера синхронизируй очередь.").setNegativeButton("Отмена",null).setPositiveButton("Отключить",(d,w)->{try{MobileStore.disconnect(MainActivity.this);SyncService.hide(MainActivity.this);deliver();}catch(Exception e){emit("silkError",e.getMessage());}}).show());}
+  @JavascriptInterface public void finish(){handler.post(()->MainActivity.this.finish());}
+ }
+ @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(result!=RESULT_OK||data==null)return;
+  if(request==3){incoming=data.getStringExtra("link");if(incoming!=null){emit("silkPairLink",incoming);connect(incoming);}return;}
+  if(request==4&&data.getData()!=null){Uri uri=data.getData();io.execute(()->{try{
+   BitmapFactory.Options bounds=new BitmapFactory.Options();bounds.inJustDecodeBounds=true;try(InputStream in=getContentResolver().openInputStream(uri)){BitmapFactory.decodeStream(in,null,bounds);}if(bounds.outWidth<=0||bounds.outHeight<=0)throw new IOException("Не удалось открыть изображение");
+   Bitmap bitmap;
+   if(Build.VERSION.SDK_INT>=28){bitmap=ImageDecoder.decodeBitmap(ImageDecoder.createSource(getContentResolver(),uri),(decoder,info,source)->{int size=Math.max(info.getSize().getWidth(),info.getSize().getHeight());double scale=Math.min(1,1024d/size);decoder.setTargetSize(Math.max(1,(int)(info.getSize().getWidth()*scale)),Math.max(1,(int)(info.getSize().getHeight()*scale)));decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);});}
+   else{BitmapFactory.Options opt=new BitmapFactory.Options();opt.inSampleSize=1;while(Math.max(bounds.outWidth,bounds.outHeight)/opt.inSampleSize>2048)opt.inSampleSize*=2;try(InputStream in=getContentResolver().openInputStream(uri)){bitmap=BitmapFactory.decodeStream(in,null,opt);}}
+   if(bitmap==null)throw new IOException("Неподдерживаемое изображение");double scale=Math.min(1,1024d/Math.max(bitmap.getWidth(),bitmap.getHeight()));if(scale<1){Bitmap small=Bitmap.createScaledBitmap(bitmap,(int)(bitmap.getWidth()*scale),(int)(bitmap.getHeight()*scale),true);bitmap.recycle();bitmap=small;}ByteArrayOutputStream out=new ByteArrayOutputStream();bitmap.compress(Bitmap.CompressFormat.PNG,100,out);bitmap.recycle();emit("silkImage","data:image/png;base64,"+android.util.Base64.encodeToString(out.toByteArray(),android.util.Base64.NO_WRAP));
+  }catch(Exception e){emit("silkError",e.getMessage());}});}
+  if(request==5&&data.getData()!=null&&exportData!=null){Uri uri=data.getData();String saved=exportData;io.execute(()->{try(OutputStream out=getContentResolver().openOutputStream(uri)){out.write(saved.getBytes(java.nio.charset.StandardCharsets.UTF_8));emit("silkMessage","Резервная копия сохранена");}catch(Exception e){emit("silkError",e.getMessage());}});}
+  if(request==6&&data.getData()!=null){Uri uri=data.getData();new AlertDialog.Builder(this).setTitle("Восстановить мобильный журнал?").setMessage("Текущая версия будет сохранена в резервной копии. Затем восстановятся данные и очередь из выбранного файла.").setNegativeButton("Отмена",null).setPositiveButton("Восстановить",(d,w)->io.execute(()->{try(InputStream in=getContentResolver().openInputStream(uri)){MobileStore.restore(this,in);deliver();wake();}catch(Exception e){emit("silkError",e.getMessage());}})).show();}
+ }
+ @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] results){super.onRequestPermissionsResult(request,permissions,results);if(results.length==0)return;if(request==1&&results[0]==PackageManager.PERMISSION_GRANTED)notifications();if(request==2&&results[0]==PackageManager.PERMISSION_GRANTED)startActivityForResult(new Intent(this,ScanActivity.class),3);}
 }
+

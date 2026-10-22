@@ -1,47 +1,42 @@
-# Silk Quest · Android companion 1.0
+# Silk Quest 2.0 · Android
 
-Небольшой компаньон для локального журнала Windows. Один компьютер, один связанный Android, один закреплённый квест. Аккаунт, облако, платный сервер и доступ к контактам не нужны.
+A full offline quest journal with nested steps, a personal reward shop, rosary purchases, square image cropping, focus sessions and pinned quest notifications.
 
-## Подключение
+## Install and update
 
-1. Установи `SilkQuest-Android.apk` на Android 8 или новее. Это тестовая сборка для ручной установки, не публикация в Google Play.
-2. Подключи компьютер и телефон к одному домашнему роутеру. Компьютер может быть подключён кабелем, телефон — по Wi-Fi.
-3. В журнале Windows открой **Настройки → Телефон · Wi-Fi**, включи подключение, затем нажми **Показать QR для подключения**. Если адресов несколько, выбери домашнюю сеть.
-4. В компаньоне нажми **Сканировать QR** и разреши камеру. Альтернатива без камеры — вставить ссылку подключения, скопированную из журнала. Код действует 5 минут и используется один раз.
-5. Разреши уведомления Android. На компьютере открой `···` у нужного квеста → **Закрепить на телефоне**.
+Download **SilkQuest-Android.apk** from [the latest release](https://github.com/Mach21st/Silk-Quest/releases/latest). Android 8.0 or later is required; Android 16 is supported. Install over the previous companion or preview APK to keep your local data. All published APKs use the same signing key.
 
-В шторке появится квест с прогрессом, ожидаемой наградой и кнопкой завершения. Закрепление на Android не меняет висящее окно Windows. Чтобы снять квест, используй тот же пункт `···` или кнопку в настройках.
+The journal opens and works without a PC. To synchronize, use **Silk Quest 2.0 on both devices**.
 
-Если Windows показывает системный запрос доступа к сети, разрешение требуется только для частной домашней сети. Приложение само не меняет брандмауэр и не запрашивает права администратора. При отсутствии соединения проверь профиль сети, разрешение для `SilkJournal.exe`, изоляцию клиентов роутера и отсутствие гостевого Wi-Fi. Интернет и перенаправление портов роутера не требуются.
+## Pair over home Wi-Fi
 
-## Без сети
+1. Put the PC and phone on the same home network.
+2. On Windows: **Settings → Phone · Wi-Fi → Show QR**.
+3. On Android: **Settings → Connect to your PC → Scan QR**. You can also paste the pairing link.
+4. Choose a quest and use **Pin in notification** if you want it in your notification shade. Allow Android notifications when asked.
 
-Последний полученный квест хранится локально на телефоне и остаётся в уведомлении. Кнопка «Завершить» сохраняет действие в очередь. Когда компьютер снова доступен по Wi-Fi, завершение передаётся в журнал; rosaries начисляет только компьютер. Повторная отправка не начисляет награду второй раз.
+The PC must be running during synchronization, including when minimized to its tray. The journal remains usable when your PC is off. Edits are saved locally with a durable queue and are sent on reconnection. Repeated requests do not grant or charge rewards twice.
 
-Если квест за это время изменили на компьютере или заменили закреплённый квест, старое действие отменяется и телефон получает актуальное состояние. Баланс на телефоне — последняя подтверждённая копия; без связи он не увеличивается самостоятельно.
+Quests, nested steps, names, descriptions, completion, rewards, shop items and pictures, purchases, balance and the pinned quest are synchronized. If both sides edit the same field, the app asks which edit to keep. Other queued edits remain intact. The offline balance is provisional until the PC accepts the changes.
 
-При выключенном компьютере или полностью закрытом журнале синхронизации нет. Журнал в трее продолжает работать. После перезагрузки телефона открой компаньон. Если Android выгрузил его фоновую службу, открой приложение и нажми «Обновить и показать уведомление». Свайп уведомления на современных Android и кнопка «Убрать» приостанавливают связь; вернуть её можно той же кнопкой в приложении. Android и конкретная прошивка могут задерживать фоновое обновление при энергосбережении.
+Focus timers, language and appearance are independent on each device. Background synchronization uses the pinned foreground notification; without notification permission, synchronization runs while the app is open. Android battery restrictions can affect background work.
 
-Если домашний IP компьютера поменялся, подключись по новому QR. Отзыв доступа и подключение другого телефона доступны в настройках Windows. Подключение другого телефона заменяет прежнее.
+## Backups
 
-## Сборка исходников
+Use **Settings → Your journal → Export a backup** to export quests, items and pending edits. The file contains no pairing credentials. Import a backup through the Android document picker. Export before switching computers. Resetting the phone does not erase the PC journal.
 
-Нужны JDK 21, Android SDK Platform 36 и Build Tools 36.0.0. Gradle, Kotlin, Android Studio, аккаунт Google и облачные библиотеки не используются.
+On Windows, back up the `data` folder before updating. Replace the EXE while keeping `data` beside it.
+
+## Build
+
+Use JDK 21, Android SDK Platform 36 and Build Tools 36 on Windows. The ZXing dependency is included with its license.
 
 ```powershell
-./build.ps1 -AndroidJar 'C:/Android/platforms/android-36/android.jar' -BuildTools 'C:/Android/build-tools/36.0.0'
+./build.ps1 -AndroidJar C:/Android/platforms/android-36/android.jar -BuildTools C:/Android/build-tools/36.0.0 -SigningKey C:/private/release.jks -OutputApk C:/output/SilkQuest-Android.apk
 ```
 
-Или установи `ANDROID_HOME` и вызови `./build.ps1`. `lib/zxing-core-3.5.3.jar` уже включён; лицензия лежит в `assets/ZXing-LICENSE.txt` и внутри APK.
+A build without `-SigningKey` creates a development key. Keep the release key private and reuse it for updates; another key cannot update an existing installation. The local script uses the development alias and password shown in its source; adapt signing to your own release credentials.
 
-Скрипт по умолчанию создаёт ключ для локальной разработки в `build/development.jks`. Для повторяемых обновлений сохрани один ключ и передавай его через `-SigningKey`. Не публикуй ключ подписи. Для публичного релиза нужна собственная закрытая подпись; текущий скрипт использует пароль разработки `android`, не предназначенный для защиты production-ключа. Смена ключа потребует удалить прежнюю установку APK.
+The build normalizes APK paths before alignment and signing, then validates the final ZIP names. HTML, CSS and JavaScript remain ordinary bundled assets. No server or frontend build service is required.
 
-## Проверки и границы
-
-Проверены компиляция под API 36, minSdk 26, манифест, APK-подпись v2/v3, QR roundtrip QRCoder → ZXing и протокол с настоящим HTTPS-сервером Windows. Протокол проверяет привязку сертификата к QR, авторизацию, одноразовое подключение, обновление закрепления, завершение, повторную отправку, устаревшие действия и отзыв доступа. На физическом Android камера, уведомление и поведение прошивки пока не проверены.
-
-Трафик идёт по HTTPS с закреплённым SHA-256 отпечатком сертификата ПК из QR. На телефон передаётся только закреплённый квест и баланс, не весь журнал. Соединение принимает только локальные IPv4-адреса. Bluetooth, интернет-синхронизация, несколько телефонов и полное редактирование журнала с телефона пока не включены.
-
-## Обновление 0.2
-
-Экран сохраняет прокрутку и не пересоздаётся при одном лишь изменении статуса связи. Очередь завершения записывается до отправки, подтверждение и обновлённый квест сохраняются вместе. При ответе 503 от компьютера команда остаётся в очереди; статус спокойно сообщает, что ПК не смог сохранить действие и отправка повторится. В разорванном соединении показывается давность последнего обновления. У завершённого квеста больше не отображается «награда 0».
+Model checks are in `tests/run.ps1`; actual Android WebView, scroll and restart checks are in `tests/device/`. These device tests run only against an emulator. Camera permissions, battery policies and notification behavior can differ by phone.

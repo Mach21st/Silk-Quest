@@ -2,18 +2,18 @@
 
 <img src="docs/images/icon.png" width="92" alt="Silk Quest icon" />
 
-# Silk Quest 1.0
+# Silk Quest 2.0
 
 ### Turn real-life goals into a quest journal.
 
-A Silksong-inspired Windows journal for tasks, focused work, and little rewards worth earning.
+A Silksong-inspired journal for Windows and Android. Turn real-life goals into quests and earn rewards you choose.
 
 [![Windows](https://img.shields.io/badge/Windows-10%20%2F%2011-202832?style=flat-square&logo=windows)](https://github.com/Mach21st/Silk-Quest/releases/latest)
 ![Languages](https://img.shields.io/badge/Language-English%20%2F%20Русский-8d4544?style=flat-square)
 ![Local first](https://img.shields.io/badge/Data-local%20first-c2b59d?style=flat-square&labelColor=202832)
 ![Built with](https://img.shields.io/badge/Built%20with-WPF%20%2F%20.NET%208-202832?style=flat-square)
 
-**[Download for Windows](https://github.com/Mach21st/Silk-Quest/releases/latest/download/SilkQuest-Windows-x64.zip)** · [All releases](https://github.com/Mach21st/Silk-Quest/releases) · [Windows guide](Windows/README.md) · [Android companion](Android/README.md)
+**[🖥️ Windows](https://github.com/Mach21st/Silk-Quest/releases/latest/download/SilkQuest-Windows-x64.zip)** · **[📱 Android APK](https://github.com/Mach21st/Silk-Quest/releases/latest/download/SilkQuest-Android.apk)** · [All releases](https://github.com/Mach21st/Silk-Quest/releases) · [Windows guide](Windows/README.md) · [Android guide](Android/README.md)
 
 </div>
 
@@ -23,7 +23,7 @@ A Silksong-inspired Windows journal for tasks, focused work, and little rewards 
 
 Break a large goal into small steps, follow its thread, and keep one quest in focus. Finish tasks to earn rosaries, then spend them in a shop filled with rewards you choose yourself.
 
-No account, subscription, or cloud server. Your journal lives on your computer.
+No account, subscription, or cloud server. Your journal stays on your devices. Sync them directly over your home Wi-Fi.
 
 | Follow the thread | Make room for focus |
 | --- | --- |
@@ -71,18 +71,22 @@ Choose an exact focus duration or a 15/25/45/60-minute preset. Changing the defa
 
 </details>
 
-## 📱 Optional Android companion
+## 📱 A full journal in your pocket
 
-Pin one quest to your Android notification shade over your home Wi-Fi.
+Android now has quests and nested steps, the reward shop, square image cropping, purchases, language settings and its own focus timer. You can work offline and keep a quest pinned in your notification shade.
 
-1. Install **[SilkQuest-Android.apk](https://github.com/Mach21st/Silk-Quest/releases/latest/download/SilkQuest-Android.apk)**.
-2. Connect your computer and phone to the same home network.
+<p align="center"><img src="docs/images/android-journal.png" width="280" alt="Silk Quest mobile journal" /></p>
+
+1. Install **[SilkQuest-Android.apk](https://github.com/Mach21st/Silk-Quest/releases/latest/download/SilkQuest-Android.apk)** on Android 8 or later.
+2. Update the Windows app to **2.0** and connect both devices to the same home network.
 3. On Windows, enable **Settings → Phone · Wi-Fi** and show the QR code.
-4. Scan it in the companion, then choose **··· → Pin to phone** on a quest.
+4. On Android, open **Settings → Connect to your PC → Scan QR**.
 
-The computer must stay on with the journal running, including in the tray. Offline completions are queued until the phone reconnects. Pairing links expire after five minutes, are single-use, and pin the computer's TLS certificate.
+Quests, steps, rewards, purchases, shop pictures and the pinned quest sync in both directions. Offline edits wait on the phone and are sent when your computer is reachable. If both devices changed the same field, choose which edit to keep. Focus timers and appearance settings remain independent.
 
-The companion currently uses **Russian UI**. Its protocol, QR encoding and APK build have been tested; camera and background-service behavior have not yet been verified on a physical Android device. See the [Android guide](Android/README.md).
+Your computer needs to be running only while exchanging changes. No account, cloud service or monthly subscription is involved. Pairing links are single-use, expire after five minutes, and pin the computer's TLS certificate.
+
+[Android setup, backups and building from source →](Android/README.md)
 
 ## 💾 Your data
 

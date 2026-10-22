@@ -120,6 +120,18 @@ public sealed class PhoneBridge : IDisposable
     string? expected=await app.Dispatcher.InvokeAsync(()=>app.State.PhoneToken);
     if(expected==null||!SecretEqual(auth??"","Bearer "+expected)){await Reply(tls,401,new{error="Phone is not paired"},ct);return;}
     LastSeen=DateTime.UtcNow;
+    if(request.Method=="POST"&&request.Path=="/api/sync")
+    {
+     try
+     {
+      var body=System.Text.Json.Nodes.JsonNode.Parse(request.Body) as System.Text.Json.Nodes.JsonObject??throw new InvalidDataException("Invalid document");
+      var result=await app.Dispatcher.InvokeAsync(()=>app.SyncMobile(body,expected));
+      await Reply(tls,result.Status,result.Body,ct);
+     }
+     catch(Exception ex)when(ex is InvalidDataException or JsonException or InvalidOperationException or FormatException or ArgumentException or OverflowException)
+     {await Reply(tls,422,new{error="Invalid journal operation",detail=ex.Message},ct);}
+     return;
+    }
     if(request.Method=="GET"&&request.Path=="/api/state")
     {
      long.TryParse(request.Query.GetValueOrDefault("after"),out long after);
@@ -157,7 +169,7 @@ public sealed class PhoneBridge : IDisposable
   var uri=new Uri("https://localhost"+start[1]);var headers=new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase);
   foreach(var line in lines.Skip(1)){int colon=line.IndexOf(':');if(colon>0)headers[line[..colon].Trim()]=line[(colon+1)..].Trim();}
   int length=0;if(headers.TryGetValue("Content-Length",out string? raw)&&!int.TryParse(raw,out length))throw new IOException("Bad length");
-  if(length<0||length>8192||headers.ContainsKey("Transfer-Encoding"))throw new IOException("Unsupported body");
+  if(length<0||length>16*1024*1024||headers.ContainsKey("Transfer-Encoding"))throw new IOException("Unsupported body");
   var body=new byte[length];await stream.ReadExactlyAsync(body,ct);var query=new Dictionary<string,string>();
   foreach(var part in uri.Query.TrimStart('?').Split('&')){var kv=part.Split('=',2);if(kv.Length==2)query[Uri.UnescapeDataString(kv[0])]=Uri.UnescapeDataString(kv[1]);}
   return new Request(start[0],uri.AbsolutePath,query,headers,Encoding.UTF8.GetString(body));
